@@ -3,7 +3,7 @@ This repository is created to group scripts needed for retrieval information fro
 
 * ## Download and installation
 1. Install [Python 3.9+](https://www.python.org/)
-2. Download/Clone this repository and enter it into the main directory.
+2. Download/Clone this repository and enter it into the main directory. If you are not familiar with Git, just go to the green button code, click on it, and download the zip.
 3. Create a virtual environment: `python -m venv env`
 4. Activate the environment: 
    
