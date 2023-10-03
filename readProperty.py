@@ -28,24 +28,48 @@ import json
 import numpy
 import time
 import math
-from datetime import date 
+import datetime
+import signal
+import time
+import readchar
+
+fLog = None
+dataframe=None
+ 
+def handler(signum, frame):
+    msg = "Ctrl-c was pressed. Do you really want to exit? Y/n "
+    print(msg, end="", flush=True)
+    res = readchar.readchar()
+    if res == 'Y':
+        fLog.close()
+        dataframe.to_excel("input.xlsx", index=False)
+        exit(1)
+    else:
+        print("", end="\r", flush=True)
+        print(" " * len(msg), end="", flush=True) # clear the printed line
+        print("    ", end="\r", flush=True)
+ 
+ 
+signal.signal(signal.SIGINT, handler)
 
 
 def getCID(compound_name):
     search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{compound_name}/cids/JSON"
-    response = requests.get(search_url)
+    try:
+        response = requests.get(search_url)
+    except ConnectionError:
+        print("Server refuse conection")
+        return -2
+    except KeyError:
+        print("CID not found " + CID)
+        return -1
+
     # connection error
     if response.status_code == 200:
         data = response.json()
         if "IdentifierList" in data:
-            try:
-                cid = data["IdentifierList"]["CID"][0]
-                return cid
-            except KeyError:
-                print("CID not found " + CID)
-            except ConnectionError:
-                print("Server refuse conection")
-                exit()
+            cid = data["IdentifierList"]["CID"][0]
+            return cid
         else:
             print("Compound not found " + compound_name)
     else:
@@ -56,19 +80,21 @@ def getCID(compound_name):
 
 def getFormula(compound_name):
     search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/formula/{compound_name}/cids/JSON"
-    response = requests.get(search_url)
+    try:
+        response = requests.get(search_url)
+    except ConnectionError:
+        print("Server refuse conection")
+        return -2
+    except KeyError:
+        print("CID not found " + CID)
+        return -1
+
     # connection error
     if response.status_code == 200:
         data = response.json()
         if "IdentifierList" in data:
-            try:
-                cid = data["IdentifierList"]["CID"][0]
-                return cid
-            except KeyError:
-                print("CID not found " + CID)
-            except ConnectionError:
-                print("Server refuse conection")
-                exit()
+            cid = data["IdentifierList"]["CID"][0]
+            return cid
         else:
             print("Compound not found " + compound_name)
     else:
@@ -115,13 +141,17 @@ def getXLogP3_CID(cid):
 dataframe = pd.read_excel("input.xlsx")
 fLog = open("log.txt", "a")
 
-fLog.write("************* New entry *************" + str(date.today))
-print(dataframe)
+now = datetime.datetime.now()
+fLog.write("-*************************************-\n")
+fLog.write("   New entry "+str(now.strftime("%d-%m-%Y %H:%M:%S")+" \n"))
+fLog.write("-*************************************-\n")
+# show date in different format
+
 counterFounded=0
 for index, row in dataframe.iterrows():
-    name = row["CAS"]
+    name = str(row["CAS"])
     xlogp = row["XLogP3-AA"]
-    if str(name) != "(na)":
+    if str(name) != "(na)" and str(name) != "na":
         if "(" in name:
             name = name.lstrip("(")
         if ")" in name:
@@ -133,6 +163,11 @@ for index, row in dataframe.iterrows():
                 dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
                 fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
                 counterFounded+=1
+            elif cid == -2:
+                print("Server refuse connection " + str(index))
+                fLog.write("--Server refuse connection " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+                fLog.close()
+                exit()
             else:
                 print("Not found and assing inf to " + str(index))
                 fLog.write("**Assigned inf to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
@@ -151,13 +186,18 @@ for index, row in dataframe.iterrows():
                 dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
                 fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
                 counterFounded+=1
+            elif cid == -2:
+                print("Server refuse connection " + str(index))
+                fLog.write("--Server refuse connection " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
+                fLog.close()
+                exit()
             else:
                 fLog.write("**Assigned inf to row " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
-                print("Not found and assing -1 to " + str(index))
+                print("Not found and assing inf to " + str(index))
                 dataframe.at[index, "XLogP3-AA"] = math.inf
         else:
             print("Already founded: " + name + " index " + str(index))
-            fLog.write("****Already founded. Row " + str(index) + " with Formula " + name + " CID founded " + str(cid) + "\n")
+            fLog.write("****Already founded. Row " + str(index) + " with Formula " + name + "\n")
 
 fLog.close()
-print("Complete! " + str(counterFounded) + " compound founded. Review log.txt to find the errors")
+print("Complete! " + str(counterFounded) + " compound founded in this iteration. Review log.txt to find the errors")
