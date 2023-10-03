@@ -28,6 +28,7 @@ import pandas as pd
 import json
 import numpy
 import time
+import math
 
 def getCID(compound_name):
     search_url = f'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{compound_name}/cids/JSON'
@@ -92,16 +93,16 @@ for index, row in dataframe.iterrows():
             if (cid>=0):
                 time.sleep(1)
                 prop=getXLogP(cid)
-                if (prop>0):
+                if (prop is not math.inf):
                     time.sleep(1)
                     dataframe.at[index, 'XLogP3-AA'] = prop
                     print("New " + name + " index " + str(index))
                 else:
-                    dataframe.at[index, 'XLogP3-AA'] = -1
-                    print("Not found and assing -1 to " + name)
+                    dataframe.at[index, 'XLogP3-AA'] = math.inf
+                    print("Not found and assing -1 to " + str(index))
             else:
-                dataframe.at[index, 'XLogP3-AA'] = -1
-                print("Not found and assing -1 to " + name)
+                dataframe.at[index, 'XLogP3-AA'] = math.inf
+                print("Not found and assing -1 to " + str(index))
             
         else:
             print("Already founded: " + name + " index " + str(index))
