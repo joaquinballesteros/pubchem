@@ -1,4 +1,3 @@
-
 """ 
 Author: Joaquín Ballesteros, jballesteros@uma.es
 License: GNU General Public License v.3.0.
@@ -29,97 +28,136 @@ import json
 import numpy
 import time
 import math
+from datetime import date 
+
 
 def getCID(compound_name):
-    search_url = f'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{compound_name}/cids/JSON'
+    search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{compound_name}/cids/JSON"
     response = requests.get(search_url)
-    #connection error
+    # connection error
     if response.status_code == 200:
         data = response.json()
-        if 'IdentifierList' in data:
+        if "IdentifierList" in data:
             try:
-                cid = data['IdentifierList']['CID'][0]
+                cid = data["IdentifierList"]["CID"][0]
                 return cid
-            except(KeyError):
-                    print('CID not found ' + CID)
-            except(ConnectionError):
-                print('Server refuse conection')
+            except KeyError:
+                print("CID not found " + CID)
+            except ConnectionError:
+                print("Server refuse conection")
                 exit()
         else:
-            print('Compound not found ' + compound_name)
+            print("Compound not found " + compound_name)
     else:
-        print(f'Error: {response.status_code}')
-        print('Compound not found ' + compound_name)
+        print(f"Error: {response.status_code}")
+        print("Compound not found " + compound_name)
     return -1
 
+
+def getFormula(compound_name):
+    search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/formula/{compound_name}/cids/JSON"
+    response = requests.get(search_url)
+    # connection error
+    if response.status_code == 200:
+        data = response.json()
+        if "IdentifierList" in data:
+            try:
+                cid = data["IdentifierList"]["CID"][0]
+                return cid
+            except KeyError:
+                print("CID not found " + CID)
+            except ConnectionError:
+                print("Server refuse conection")
+                exit()
+        else:
+            print("Compound not found " + compound_name)
+    else:
+        print(f"Error: {response.status_code}")
+        print("Compound not found " + compound_name)
+    return -1
+
+
 def getXLogP(CID):
-    search_url = f'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{CID}/property/XLogP/JSON'
+    search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{CID}/property/XLogP/JSON"
     response = requests.get(search_url)
     if response.status_code == 200:
         data = response.json()
-        if 'PropertyTable' in data:
+        if "PropertyTable" in data:
             try:
                 prop = data["PropertyTable"]["Properties"][0]["XLogP"]
                 return prop
-            except(KeyError):
-                print('XlogP not found for CID' + str(CID))
-            except(ConnectionError):
-                print('Server refuse conection')
+            except KeyError:
+                print("XlogP not found for CID" + str(CID))
+            except ConnectionError:
+                print("Server refuse conection")
                 exit()
         else:
-            print('XlogP not found ' + compound_name)
+            print("XlogP not found " + compound_name)
     else:
-        print(f'Error: {response.status_code}')
-        print('XlogP not found ' + compound_name)
+        print(f"Error: {response.status_code}")
+        print("XlogP not found " + compound_name)
     return -1
 
+
+def getXLogP3_CID(cid):
+    time.sleep(1)
+    prop = getXLogP(cid)
+    if prop is not math.inf:
+        time.sleep(1)
+        print("New " + name + " index " + str(index))
+        return prop
+    else:
+        print("Not found and assing inf to " + str(index))
+        return math.inf
+
+
 # read by default 1st sheet of an excel file
-dataframe = pd.read_excel('input.xlsx')
+dataframe = pd.read_excel("input.xlsx")
+fLog = open("log.txt", "a")
+
+fLog.write("************* New entry *************" + str(date.today))
 print(dataframe)
-
+counterFounded=0
 for index, row in dataframe.iterrows():
-    name = row['CAS']
-    if str(name)!='nan':
+    name = row["CAS"]
+    xlogp = row["XLogP3-AA"]
+    if str(name) != "(na)":
         if "(" in name:
-            name = name.lstrip('(')
+            name = name.lstrip("(")
         if ")" in name:
-            name = name.rstrip(')')
-
-        xlogp = row['XLogP3-AA']
-
-        #It is not complete
-        if (numpy.isnan(row['XLogP3-AA']) and name!="na"):
+            name = name.rstrip(")")
+        # It is not complete
+        if numpy.isnan(row["XLogP3-AA"]) and name != "na":
             cid = getCID(name)
-            if (cid>=0):
-                time.sleep(1)
-                prop=getXLogP(cid)
-                if (prop is not math.inf):
-                    time.sleep(1)
-                    dataframe.at[index, 'XLogP3-AA'] = prop
-                    print("New " + name + " index " + str(index))
-                else:
-                    dataframe.at[index, 'XLogP3-AA'] = math.inf
-                    print("Not found and assing -1 to " + str(index))
+            if cid >= 0:
+                dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
+                fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+                counterFounded+=1
             else:
-                dataframe.at[index, 'XLogP3-AA'] = math.inf
-                print("Not found and assing -1 to " + str(index))
-            
+                print("Not found and assing inf to " + str(index))
+                fLog.write("**Assigned inf to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+                dataframe.at[index, "XLogP3-AA"] = math.inf
+
         else:
             print("Already founded: " + name + " index " + str(index))
+            fLog.write("****Already founded. Row " + str(index) + " with CAS " + name+ "\n")
         # Save the modified DataFrame to an Excel file
-        dataframe.to_excel('input.xlsx', index=False)
+        dataframe.to_excel("input.xlsx", index=False)
     else:
-        print('Compound empty field CAS ')
+        name = row["Formula"]
+        if numpy.isnan(row["XLogP3-AA"]) and name != "na":
+            cid = getFormula(name)
+            if cid >= 0:
+                dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
+                fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
+                counterFounded+=1
+            else:
+                fLog.write("**Assigned inf to row " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
+                print("Not found and assing -1 to " + str(index))
+                dataframe.at[index, "XLogP3-AA"] = math.inf
+        else:
+            print("Already founded: " + name + " index " + str(index))
+            fLog.write("****Already founded. Row " + str(index) + " with Formula " + name + " CID founded " + str(cid) + "\n")
 
-
-
-
-
-
-
- 
-print(dataframe)
-
-
-
-
+fLog.close()
+print("Complete! " + str(counterFounded) + " compound founded. Review log.txt to find the errors")

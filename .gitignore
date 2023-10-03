@@ -8,6 +8,7 @@ env/*
 *.so
 .vscode/*
 .DS_Store
+log.txt
 
 # Distribution / packaging
 .Python
