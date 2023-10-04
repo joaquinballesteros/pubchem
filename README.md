@@ -16,7 +16,7 @@ This repository is created to group scripts needed for retrieval information fro
 5. Install the dependencies in the terminal: `pip install -r requirements.txt`
 
 * ## How to use it!
-1. Please include in the same folder a file called **input.xlsx** from the TimsTOF machine; it should consist of a column called CAS with its value encoded with parentheses.
+1. Please include in the same folder a file called **input.xlsx**; it should consist of a column called CAS with its value encoded with parentheses.
 2. Open a terminal and activate the enviroment.
    
    In Linux or Mac: `source env/bin/activate`
@@ -24,7 +24,7 @@ This repository is created to group scripts needed for retrieval information fro
    In Windows: `.\env\Scripts\Activate`
 
 3. Run the script in the terminal. 
-   `python3 readProperty.py`
+   `python readProperty.py`
 4. It will show you the components that were found and the ones that were not. During this process, it will overwrite in the **input.xlsl** file. If the PubChem cut or you lost the connection, you will have the information found at **input.xlsl**. You just need to rerun again, it will save the current progress.
 
 * ## Troubleshooting
