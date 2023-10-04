@@ -35,19 +35,21 @@ import readchar
 
 fLog = None
 dataframe=None
+saving=False
  
 def handler(signum, frame):
-    msg = "Ctrl-c was pressed. Do you really want to exit? Y/n "
-    print(msg, end="", flush=True)
-    res = readchar.readchar()
-    if res == 'Y':
-        fLog.close()
-        dataframe.to_excel("input.xlsx", index=False)
-        exit(1)
-    else:
-        print("", end="\r", flush=True)
-        print(" " * len(msg), end="", flush=True) # clear the printed line
-        print("    ", end="\r", flush=True)
+    if (not saving):
+        msg = "Ctrl-c was pressed. Do you really want to exit? Y/n "
+        print(msg, end="", flush=True)
+        res = readchar.readchar()
+        if res == 'Y':
+            fLog.close()
+            dataframe.to_excel("input.xlsx", index=False)
+            exit(1)
+        else:
+            print("", end="\r", flush=True)
+            print(" " * len(msg), end="", flush=True) # clear the printed line
+            print("    ", end="\r", flush=True)
  
  
 signal.signal(signal.SIGINT, handler)
@@ -78,9 +80,10 @@ def getCID(compound_name):
     return -1
 
 
-def getFormula(compound_name):
-    search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/formula/{compound_name}/cids/JSON"
+def getByName(compound_name):
+    search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{compound_name}/cids/JSON"
     try:
+        time.sleep(0.1)
         response = requests.get(search_url)
     except ConnectionError:
         print("Server refuse conection")
@@ -100,7 +103,7 @@ def getFormula(compound_name):
     else:
         print(f"Error: {response.status_code}")
         print("Compound not found " + compound_name)
-    return -1
+    return math.inf
 
 
 def getXLogP(CID):
@@ -126,10 +129,9 @@ def getXLogP(CID):
 
 
 def getXLogP3_CID(cid):
-    time.sleep(1)
+    time.sleep(0.1)
     prop = getXLogP(cid)
     if prop is not math.inf:
-        time.sleep(1)
         print("New " + name + " index " + str(index))
         return prop
     else:
@@ -147,7 +149,7 @@ fLog.write("   New entry "+str(now.strftime("%d-%m-%Y %H:%M:%S")+" \n"))
 fLog.write("-*************************************-\n")
 # show date in different format
 
-counterFounded=0
+counterFound=0
 for index, row in dataframe.iterrows():
     name = str(row["CAS"])
     xlogp = row["XLogP3-AA"]
@@ -157,47 +159,40 @@ for index, row in dataframe.iterrows():
         if ")" in name:
             name = name.rstrip(")")
         # It is not complete
-        if numpy.isnan(row["XLogP3-AA"]):
-            cid = getCID(name)
-            if cid >= 0:
-                dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
-                fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
-                counterFounded+=1
-            elif cid == -2:
-                print("Server refuse connection " + str(index))
-                fLog.write("--Server refuse connection " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
-                fLog.close()
-                exit()
-            else:
-                print("Not found and assing inf to " + str(index))
-                fLog.write("**Assigned inf to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
-                dataframe.at[index, "XLogP3-AA"] = math.inf
-
-        else:
-            print("Already founded: " + name + " index " + str(index))
-            fLog.write("****Already founded. Row " + str(index) + " with CAS " + name+ "\n")
-        # Save the modified DataFrame to an Excel file
-        dataframe.to_excel("input.xlsx", index=False)
     else:
-        name = row["Formula"]
-        if numpy.isnan(row["XLogP3-AA"]) and name != "na":
-            cid = getFormula(name)
-            if cid >= 0:
-                dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
-                fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
-                counterFounded+=1
-            elif cid == -2:
-                print("Server refuse connection " + str(index))
-                fLog.write("--Server refuse connection " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
-                fLog.close()
-                exit()
-            else:
-                fLog.write("**Assigned inf to row " + str(index) + " with Formula " + name + " CID founded " + str(cid)+ "\n")
-                print("Not found and assing inf to " + str(index))
-                dataframe.at[index, "XLogP3-AA"] = math.inf
+        name = row["Name"]
+    
+    if numpy.isnan(row["XLogP3-AA"]):
+        if (numpy.isnan(row["CID"])):
+            cid = getCID(name)
         else:
-            print("Already founded: " + name + " index " + str(index))
-            fLog.write("****Already founded. Row " + str(index) + " with Formula " + name + "\n")
+            cid = row["CID"]
+        if cid >= 0:
+            dataframe.at[index, "CID"]=cid
+            dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
+            fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+            counterFound+=1
+        elif cid == -2:
+            print("Server refuse connection " + str(index))
+            fLog.write("--Server refuse connection " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+            fLog.close()
+            exit()
+        else:
+            row["CID"]=math.inf
+            print("Not found and assing inf to " + str(index))
+            fLog.write("**Assigned inf to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+            dataframe.at[index, "XLogP3-AA"] = math.inf
+
+    else:
+        print("Already founded: " + name + " index " + str(index))
+        fLog.write("****Already found. Row " + str(index) + " with CAS " + name+ "\n")
+    # Save the modified DataFrame to an Excel file
+    saving = True
+    dataframe.to_excel("input.xlsx", index=False)
+    fLog.flush()
+    saving = False
+        
+
 
 fLog.close()
-print("Complete! " + str(counterFounded) + " compound founded in this iteration. Review log.txt to find the errors")
+print("Complete! " + str(counterFound) + " compound founded in this iteration. Review log.txt to find the errors")
