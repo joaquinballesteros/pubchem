@@ -122,7 +122,7 @@ def getXLogP(CID):
     else:
         print(f"Error: {response.status_code}")
         print("XlogP not found " + compound_name)
-    return -1
+    return math.inf
 
 
 def getXLogP3_CID(cid):
@@ -157,7 +157,7 @@ for index, row in dataframe.iterrows():
         if ")" in name:
             name = name.rstrip(")")
         # It is not complete
-        if numpy.isnan(row["XLogP3-AA"]) and name != "na":
+        if numpy.isnan(row["XLogP3-AA"]):
             cid = getCID(name)
             if cid >= 0:
                 dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
