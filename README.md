@@ -26,4 +26,7 @@ This repository is created to group scripts needed for retrieval information fro
 3. Run the script in the terminal. 
    `python3 readProperty.py`
 4. It will show you the components that were found and the ones that were not. During this process, it will overwrite in the **input.xlsl** file. If the PubChem cut or you lost the connection, you will have the information found at **input.xlsl**. You just need to rerun again, it will save the current progress.
+
+* ## Troubleshooting
+* Python not found: If you are windows system, please add the program to the path. [How to do that](https://medium.com/@viknesh2798/how-to-fix-the-issues-while-using-python-command-in-the-command-prompt-ba56d9018c5f)
   
