@@ -16,7 +16,7 @@ This repository is created to group scripts needed for retrieval information fro
 5. Install the dependencies in the terminal: `pip install -r requirements.txt`
 
 * ## How to use it!
-1. Please include in the same folder a file called **input.xlsx** from the TimsTOF machine; it should consist of a column called CAS with its value encoded with parentheses.
+1. Please include in the same folder a file called **input.xlsx**; it should consist of a column called CAS with its value encoded with parentheses.
 2. Open a terminal and activate the enviroment.
    
    In Linux or Mac: `source env/bin/activate`
