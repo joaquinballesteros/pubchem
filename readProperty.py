@@ -170,21 +170,21 @@ for index, row in dataframe.iterrows():
         if cid >= 0:
             dataframe.at[index, "CID"]=cid
             dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
-            fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+            fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID found " + str(cid)+ "\n")
             counterFound+=1
         elif cid == -2:
             print("Server refuse connection " + str(index))
-            fLog.write("--Server refuse connection " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+            fLog.write("--Server refuse connection " + str(index) + " with CAS " + name + " CID found " + str(cid)+ "\n")
             fLog.close()
             exit()
         else:
             row["CID"]=math.inf
             print("Not found and assing inf to " + str(index))
-            fLog.write("**Assigned inf to row " + str(index) + " with CAS " + name + " CID founded " + str(cid)+ "\n")
+            fLog.write("**Assigned inf to row " + str(index) + " with CAS " + name + " CID found " + str(cid)+ "\n")
             dataframe.at[index, "XLogP3-AA"] = math.inf
 
     else:
-        print("Already founded: " + name + " index " + str(index))
+        print("Already found: " + name + " index " + str(index))
         fLog.write("****Already found. Row " + str(index) + " with CAS " + name+ "\n")
     # Save the modified DataFrame to an Excel file
     saving = True
@@ -195,4 +195,4 @@ for index, row in dataframe.iterrows():
 
 
 fLog.close()
-print("Complete! " + str(counterFound) + " compound founded in this iteration. Review log.txt to find the errors")
+print("Complete! " + str(counterFound) + " compound found in this iteration. Review log.txt to find the errors")
