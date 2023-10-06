@@ -127,6 +127,80 @@ def getXLogP(CID):
         print("XlogP not found " + compound_name)
     return math.inf
 
+#CanonicalSMILES
+#RotatableBondCount
+#TPSA
+
+def getALL(CID):
+    properties="XLogP,CanonicalSMILES,TPSA,Charge,HBondDonorCount,HBondAcceptorCount,Volume3D,FeatureAnionCount3D,FeatureCationCount3D,FeatureRingCount3D,FeatureHydrophobeCount3D"
+    search_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{CID}/property/"+properties+"/JSON"
+    response = requests.get(search_url)
+    if response.status_code == 200:
+        data = response.json()
+        if "PropertyTable" in data:
+            try:
+                XLogP = data["PropertyTable"]["Properties"][0]["XLogP"]
+            except KeyError:
+                print("XlogP not found for CID" + str(CID))
+                XLogP=math.inf
+            try:
+                CanonicalSMILES = data["PropertyTable"]["Properties"][0]["CanonicalSMILES"]
+            except KeyError:
+                print("CanonicalSMILES not found for CID" + str(CID))
+                CanonicalSMILES=math.inf
+            try:
+                TPSA = data["PropertyTable"]["Properties"][0]["TPSA"]
+            except KeyError:
+                print("TPSA not found for CID" + str(CID))
+                TPSA=math.inf
+            try:
+                Charge = data["PropertyTable"]["Properties"][0]["Charge"]
+            except KeyError:
+                print("Charge not found for CID" + str(CID))
+                Charge=math.inf
+            try:
+                HBondDonorCount = data["PropertyTable"]["Properties"][0]["HBondDonorCount"]
+            except KeyError:
+                print("HBondDonorCount not found for CID" + str(CID))
+                HBondDonorCount=math.inf
+            try:
+                HBondAcceptorCount = data["PropertyTable"]["Properties"][0]["HBondAcceptorCount"]
+            except KeyError:
+                print("HBondAcceptorCount not found for CID" + str(CID))
+                HBondAcceptorCount=math.inf
+            try:
+                Volume3D = data["PropertyTable"]["Properties"][0]["Volume3D"]
+            except KeyError:
+                print("Volume3D not found for CID" + str(CID))
+                Volume3D=math.inf
+            try:
+                FeatureAnionCount3D = data["PropertyTable"]["Properties"][0]["FeatureAnionCount3D"]
+            except KeyError:
+                print("FeatureAnionCount3D not found for CID" + str(CID))
+                FeatureAnionCount3D=math.inf
+            try:
+                FeatureCationCount3D = data["PropertyTable"]["Properties"][0]["FeatureCationCount3D"]
+            except KeyError:
+                print("FeatureCationCount3D not found for CID" + str(CID))
+                FeatureCationCount3D=math.inf
+            try:
+                FeatureRingCount3D = data["PropertyTable"]["Properties"][0]["FeatureRingCount3D"]
+            except KeyError:
+                print("FeatureRingCount3D not found for CID" + str(CID))
+                FeatureRingCount3D=math.inf
+            try:
+                FeatureHydrophobeCount3D = data["PropertyTable"]["Properties"][0]["FeatureHydrophobeCount3D"]
+            except KeyError:
+                print("FeatureHydrophobeCount3D not found for CID" + str(CID))
+                FeatureHydrophobeCount3D=math.inf
+
+            return XLogP,CanonicalSMILES,TPSA,Charge,HBondDonorCount,HBondAcceptorCount,Volume3D,FeatureAnionCount3D,FeatureCationCount3D,FeatureRingCount3D,FeatureHydrophobeCount3D
+        else:
+            print("XlogP not found " + compound_name)
+    else:
+        print(f"Error: {response.status_code}")
+    return math.inf,math.inf,math.inf,math.inf,math.inf,math.inf,math.inf,math.inf,math.inf,math.inf,math.inf,math.inf
+
 
 def getXLogP3_CID(cid):
     time.sleep(0.1)
@@ -169,9 +243,22 @@ for index, row in dataframe.iterrows():
             cid = row["CID"]
         if cid >= 0:
             dataframe.at[index, "CID"]=cid
-            dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
+            #dataframe.at[index, "XLogP3-AA"] = getXLogP3_CID(cid)
+            XlogP,CanonicalSMILES,TPSA,Charge,HBondDonorCount,HBondAcceptorCount,Volume3D,FeatureAnionCount3D,FeatureCationCount3D,FeatureRingCount3D,FeatureHydrophobeCount3D=getALL(cid)
+            dataframe.at[index, "XLogP3-AA"] = XlogP
+            dataframe.at[index, "CanonicalSMILES"] = CanonicalSMILES
+            dataframe.at[index, "TPSA"] = TPSA
+            dataframe.at[index, "Charge"] = Charge
+            dataframe.at[index, "HBondDonorCount"] = HBondDonorCount
+            dataframe.at[index, "HBondAcceptorCount"] = HBondAcceptorCount
+            dataframe.at[index, "Volume3D"] = Volume3D
+            dataframe.at[index, "FeatureAnionCount3D"] = FeatureAnionCount3D
+            dataframe.at[index, "FeatureRingCount3D"] = FeatureRingCount3D
+            dataframe.at[index, "FeatureHydrophobeCount3D"] = FeatureHydrophobeCount3D
             fLog.write("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID found " + str(cid)+ "\n")
             counterFound+=1
+            print("Assigned " + str(dataframe.at[index, "XLogP3-AA"]) + " to row " + str(index) + " with CAS " + name + " CID found " + str(cid)+ "\n")
+            
         elif cid == -2:
             print("Server refuse connection " + str(index))
             fLog.write("--Server refuse connection " + str(index) + " with CAS " + name + " CID found " + str(cid)+ "\n")

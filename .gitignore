@@ -9,7 +9,7 @@ env/*
 .vscode/*
 .DS_Store
 log.txt
-
+regression*
 # Distribution / packaging
 .Python
 build/
