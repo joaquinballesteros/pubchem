@@ -29,4 +29,5 @@ This repository is created to group scripts needed for retrieval information fro
 
 * ## Troubleshooting
 * Python not found: If you are windows system, please add the program to the path. [How to do that](https://medium.com/@viknesh2798/how-to-fix-the-issues-while-using-python-command-in-the-command-prompt-ba56d9018c5f)
+* Enviroment can not be activated: Please check that you are in the folder that you created the enviroment. 
   
